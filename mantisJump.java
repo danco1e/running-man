@@ -14,12 +14,13 @@ public class mantisJump extends JPanel {
     int velocityY = -10;
     int gravity = 1;
     int enemyXpos = 800;
-    int enemyYpos = 210;
+    int enemyYpos = 230;
     int spriteNum = 0;
     BufferedImage playerSprite;
     BufferedImage playerSprite2;
     BufferedImage playerSprite3;
     BufferedImage enemySprite;
+    BufferedImage enemySprite2;
     boolean isJumping = false;
     public mantisJump() {
         setPreferredSize(new Dimension(800, 450));//size of screen
@@ -29,11 +30,20 @@ public class mantisJump extends JPanel {
             repaint();//jumps
         });
         timer.start();//starts timer
-        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "jump");
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("Z"), "jump");
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("X"), "jump2");
         getActionMap().put("jump", new AbstractAction() {
         @Override
         public void actionPerformed(java.awt.event.ActionEvent e) {
         Jump();
+        
+        }
+            });
+            getActionMap().put("jump2", new AbstractAction() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent e) {
+        Jump2();
+        
         }
             });
 
@@ -41,8 +51,9 @@ public class mantisJump extends JPanel {
             if(isJumping == false){
             playerSprite = ImageIO.read(new File("sprites/runningman1.png"));
             playerSprite2 = ImageIO.read(new File("sprites/runningman2.png"));
-            playerSprite3 = ImageIO.read(new File("sprites/inkling.png"));//still need to make jumping image
-            enemySprite = ImageIO.read(new File("sprites/ironmouse.png"));
+            playerSprite3 = ImageIO.read(new File("sprites/jumpingman4.png"));
+            enemySprite = ImageIO.read(new File("sprites/burt3.png"));
+            enemySprite2 = ImageIO.read(new File("sprites/bat.png"));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -57,10 +68,7 @@ public class mantisJump extends JPanel {
         g.setColor(new Color(80, 170, 80));//ground color
         g.fillRect(0, 350, 800, 100);
 
-        g.setColor(Color.GREEN);//enemy color placeholder
-        g.fillOval(enemyXpos, enemyYpos, 40, 60);
-
-        g.drawImage(enemySprite, enemyXpos, enemyYpos, 192, 192, this);
+        g.drawImage(enemySprite, enemyXpos, enemyYpos, 128, 128, this);
 
         g.setColor(Color.PINK);//health color
         g.drawString("Health: " + health,50,80);
@@ -95,10 +103,16 @@ public class mantisJump extends JPanel {
         window.setVisible(true);
     }
 
-    public void Jump(){
+    public void Jump(){//smaller jump
         if(isJumping == false){//checks if jumping
             isJumping = true;//sets isJumping to true
-            velocityY = -20;//sets velocity
+            velocityY = -15;//sets velocity
+        }
+    }
+    public void Jump2(){//bigger jump
+        if(isJumping == false){//checks if jumping
+            isJumping = true;//sets isJumping to true
+            velocityY = -19;//sets velocity
         }
     }
     public void Collision(){
