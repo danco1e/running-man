@@ -14,14 +14,19 @@ public class mantisJump extends JPanel {
     int velocityY = -10;
     int gravity = 1;
     int enemyXpos = 800;
-    int enemyYpos = 230;
+    int enemyYpos = 260;
+    int enemyXpos2 = 800;
+    int enemyYpos2 = 80;
     int spriteNum = 0;
     BufferedImage playerSprite;
     BufferedImage playerSprite2;
     BufferedImage playerSprite3;
     BufferedImage enemySprite;
     BufferedImage enemySprite2;
+    BufferedImage healthSprite;
+    BufferedImage gameOverScreen;
     boolean isJumping = false;
+    boolean gameOver = false;
     public mantisJump() {
         setPreferredSize(new Dimension(800, 450));//size of screen
         setBackground(new Color(135, 206, 235));//background color
@@ -52,8 +57,10 @@ public class mantisJump extends JPanel {
             playerSprite = ImageIO.read(new File("sprites/runningman1.png"));
             playerSprite2 = ImageIO.read(new File("sprites/runningman2.png"));
             playerSprite3 = ImageIO.read(new File("sprites/jumpingman4.png"));
-            enemySprite = ImageIO.read(new File("sprites/burt3.png"));
-            enemySprite2 = ImageIO.read(new File("sprites/bat.png"));
+            enemySprite = ImageIO.read(new File("sprites/snail.png"));
+            enemySprite2 = ImageIO.read(new File("sprites/burt3.png"));
+            healthSprite = ImageIO.read(new File("sprites/heart.png"));
+            gameOverScreen = ImageIO.read(new File("sprites/gameOverImg.png"));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -69,9 +76,20 @@ public class mantisJump extends JPanel {
         g.fillRect(0, 350, 800, 100);
 
         g.drawImage(enemySprite, enemyXpos, enemyYpos, 128, 128, this);
-
-        g.setColor(Color.PINK);//health color
-        g.drawString("Health: " + health,50,80);
+        g.drawImage(enemySprite2, enemyXpos2, enemyYpos2,128, 128, this);
+        if(health == 3){
+        g.drawImage(healthSprite,0,0,96,96, this);
+        g.drawImage(healthSprite,60,0,96,96,this);
+        g.drawImage(healthSprite,120,0,96,96,this);
+        }
+        else if(health == 2){
+        g.drawImage(healthSprite,0,0,96,96, this);
+        g.drawImage(healthSprite,60,0,96,96,this);
+        }
+        else if(health == 1){
+        g.drawImage(healthSprite,0,0,96,96, this);
+        }
+        
         if(spriteNum == 0){
         g.drawImage(playerSprite, mannyXpos, mannyYpos, 128,128, this);
         spriteNum = 1;
@@ -83,6 +101,20 @@ public class mantisJump extends JPanel {
         else{
             g.drawImage(playerSprite3, mannyXpos, mannyYpos, 128, 128, this);
             spriteNum = 0;
+        }
+
+        if(gameOver){
+
+            g.setColor(Color.BLACK);
+            g.fillRect(0,0,800,450);
+
+            g.drawImage(gameOverScreen, 200, 50, 400, 300, this);
+
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 40));
+            g.drawString("Reach the end!", 250, 350);
+
+            return;
         }
     }
 
@@ -118,17 +150,36 @@ public class mantisJump extends JPanel {
     public void Collision(){
         //code for collision check, damages player if collision occurs
         Rectangle manny = new Rectangle(mannyXpos,mannyYpos,32,32);
-        Rectangle enemy = new Rectangle(enemyXpos,enemyYpos,32,32);
+        Rectangle enemy = new Rectangle(enemyXpos,enemyYpos,64,64);
+        Rectangle enemy2 = new Rectangle(enemyXpos2,enemyYpos2,64,64);
         boolean intersect = manny.intersects(enemy);
-        if(intersect){
+        boolean intersect2 = manny.intersects(enemy2);
+        if(intersect){//collision for enemy1
             if(damageable){
             health = health - 1;//health minus one
+            if(health <= 0){
+                gameOver = true;
+            }
             damageable = false;
-            Timer timer2 = new Timer(2000, e -> {//2 second cooldown
+            Timer timer2 = new Timer(1000, e -> {//2 second cooldown
             damageable = true;
         });
-        timer2.setRepeats(false);//stops repeats
-        timer2.start();//starts timer
+            timer2.setRepeats(false);//stops repeats
+            timer2.start();//starts timer
+            }
+        }
+        if(intersect2){//collision for enemy2
+            if(damageable){
+            health = health - 1;//health minus one
+            if(health <= 0){
+                gameOver = true;
+            }
+            damageable = false;
+            Timer timer3 = new Timer(1000, e -> {//2 second cooldown
+            damageable = true;
+        });
+            timer3.setRepeats(false);//stops repeats
+            timer3.start();//starts timer
             }
         }
     }
@@ -136,7 +187,8 @@ public class mantisJump extends JPanel {
         Collision();
         if(isJumping){
             spriteNum = 3;
-            enemyXpos = enemyXpos - 10;
+            enemyXpos = enemyXpos - 8;
+            enemyXpos2 = enemyXpos2 - 10;
             velocityY = velocityY + gravity;//increases velocity for next
             mannyYpos = mannyYpos + velocityY;//changes position
             if(mannyYpos >= 230){
@@ -145,16 +197,20 @@ public class mantisJump extends JPanel {
                 isJumping = false;
             }
             if(mannyXpos >= enemyXpos){
-                if(mannyYpos > enemyXpos){
+                if(mannyYpos > enemyYpos){
                     score = score + 10;//score plus 10 when jump over enemy
                 }
             }
         }
         else{
-        enemyXpos = enemyXpos - 10;
+        enemyXpos = enemyXpos - 8;
+        enemyXpos2 = enemyXpos2 - 10;
         }
         if(enemyXpos <= -10){
             enemyXpos = 800;
+        }
+        if(enemyXpos2 <= -10){
+            enemyXpos2 = 800;
         }
 
     }
