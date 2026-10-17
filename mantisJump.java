@@ -8,7 +8,6 @@ import java.io.File;
 public class mantisJump extends JPanel {
     boolean damageable = true;
     int health = 3;
-    int score = 0;
     int mannyXpos = 150;
     int mannyYpos = 230;
     int velocityY = -10;
@@ -18,6 +17,8 @@ public class mantisJump extends JPanel {
     int enemyXpos2 = 800;
     int enemyYpos2 = 80;
     int spriteNum = 0;
+    int enemySpeed = (int) (Math.random() * 3) + 1;
+    int enemySpeed2 = (int) (Math.random() * 3) + 1;
     BufferedImage playerSprite;
     BufferedImage playerSprite2;
     BufferedImage playerSprite3;
@@ -25,8 +26,11 @@ public class mantisJump extends JPanel {
     BufferedImage enemySprite2;
     BufferedImage healthSprite;
     BufferedImage gameOverScreen;
+    BufferedImage winCon;
     boolean isJumping = false;
     boolean gameOver = false;
+    boolean dashed = false;
+    boolean gameWon = false;
     public mantisJump() {
         setPreferredSize(new Dimension(800, 450));//size of screen
         setBackground(new Color(135, 206, 235));//background color
@@ -37,20 +41,27 @@ public class mantisJump extends JPanel {
         timer.start();//starts timer
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("Z"), "jump");
         getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("X"), "jump2");
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("C"), "dash");
         getActionMap().put("jump", new AbstractAction() {
         @Override
         public void actionPerformed(java.awt.event.ActionEvent e) {
         Jump();
-        
-        }
-            });
-            getActionMap().put("jump2", new AbstractAction() {
+        } 
+        });
+        getActionMap().put("jump2", new AbstractAction() {
         @Override
         public void actionPerformed(java.awt.event.ActionEvent e) {
         Jump2();
-        
         }
-            });
+        });
+        getActionMap().put("dash", new AbstractAction() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent e) {
+        if(dashed == false){
+        dash();
+        }
+        }
+        });
 
         try {
             if(isJumping == false){
@@ -61,6 +72,7 @@ public class mantisJump extends JPanel {
             enemySprite2 = ImageIO.read(new File("sprites/burt3.png"));
             healthSprite = ImageIO.read(new File("sprites/heart.png"));
             gameOverScreen = ImageIO.read(new File("sprites/gameOverImg.png"));
+            winCon = ImageIO.read(new File("sprites/ironmouse.png"));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -74,9 +86,10 @@ public class mantisJump extends JPanel {
         // Draw the ground
         g.setColor(new Color(80, 170, 80));//ground color
         g.fillRect(0, 350, 800, 100);
-
+        g.drawImage(winCon, 700, 270, 128,128,this);
         g.drawImage(enemySprite, enemyXpos, enemyYpos, 128, 128, this);
         g.drawImage(enemySprite2, enemyXpos2, enemyYpos2,128, 128, this);
+
         if(health == 3){
         g.drawImage(healthSprite,0,0,96,96, this);
         g.drawImage(healthSprite,60,0,96,96,this);
@@ -116,6 +129,14 @@ public class mantisJump extends JPanel {
 
             return;
         }
+        if(gameWon){
+            damageable = false;
+            g.setColor(Color.WHITE);
+            g.fillRect(0,0,800,450);
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 40));
+            g.drawString("You Win!", 250, 350);
+        }
     }
 
     public void drawImage(){
@@ -147,13 +168,32 @@ public class mantisJump extends JPanel {
             velocityY = -19;//sets velocity
         }
     }
+    public void dash(){//dashs forward/teleport
+        if(mannyYpos < enemyYpos - 10){
+        damageable = false;
+        }
+        mannyXpos = mannyXpos + 80;
+        dashed = true;
+        Timer dashTimer = new Timer(3000, e -> {
+            dashed = false;
+        });
+        Timer shieldTimer = new Timer(3000, e -> {
+            damageable = true;
+        });
+        dashTimer.start();
+        dashTimer.setRepeats(false);
+        shieldTimer.start();
+        shieldTimer.setRepeats(false);
+    }
     public void Collision(){
         //code for collision check, damages player if collision occurs
         Rectangle manny = new Rectangle(mannyXpos,mannyYpos,32,32);
         Rectangle enemy = new Rectangle(enemyXpos,enemyYpos,64,64);
         Rectangle enemy2 = new Rectangle(enemyXpos2,enemyYpos2,64,64);
+        Rectangle goal = new Rectangle(700, 260, 128, 128);
         boolean intersect = manny.intersects(enemy);
         boolean intersect2 = manny.intersects(enemy2);
+        boolean intersect3 = manny.intersects(goal);
         if(intersect){//collision for enemy1
             if(damageable){
             health = health - 1;//health minus one
@@ -182,6 +222,10 @@ public class mantisJump extends JPanel {
             timer3.start();//starts timer
             }
         }
+        if(intersect3){
+            gameWon = true;
+            damageable = false;
+        }
     }
     public void updateGame(){
         Collision();
@@ -198,20 +242,36 @@ public class mantisJump extends JPanel {
             }
             if(mannyXpos >= enemyXpos){
                 if(mannyYpos > enemyYpos){
-                    score = score + 10;//score plus 10 when jump over enemy
                 }
             }
         }
         else{
+        if(enemySpeed == 1){
         enemyXpos = enemyXpos - 8;
-        enemyXpos2 = enemyXpos2 - 10;
+        }
+        else if(enemySpeed ==2){
+        enemyXpos = enemyXpos - 9;
+        }
+        else{
+        enemyXpos = enemyXpos - 13;
+        }
+        if(enemySpeed2 == 1){
+        enemyXpos2 = enemyXpos2 - 11;
+        }
+        else if(enemySpeed2 == 2){
+        enemyXpos2 = enemyXpos2 - 7;
+        }
+        else{
+        enemyXpos2 = enemyXpos2 - 15;
+        }
         }
         if(enemyXpos <= -10){
             enemyXpos = 800;
+            enemySpeed = (int) (Math.random() * 3) + 1;
         }
         if(enemyXpos2 <= -10){
             enemyXpos2 = 800;
+            enemySpeed2 = (int) (Math.random() * 3) + 1;
         }
-
     }
 }
