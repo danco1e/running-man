@@ -4,8 +4,11 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.File;
+import javax.sound.sampled.*;
 
 public class mantisJump extends JPanel {
+    boolean gameOverSoundPlayed = false;
+    boolean ongoing = true;
     boolean damageable = true;
     int health = 3;
     int mannyXpos = 150;
@@ -19,7 +22,7 @@ public class mantisJump extends JPanel {
     int spriteNum = 0;
     int enemySpeed = (int) (Math.random() * 3) + 1;
     int enemySpeed2 = (int) (Math.random() * 3) + 1;
-    BufferedImage playerSprite;
+    BufferedImage playerSprite;//sprite images
     BufferedImage playerSprite2;
     BufferedImage playerSprite3;
     BufferedImage enemySprite;
@@ -27,10 +30,16 @@ public class mantisJump extends JPanel {
     BufferedImage healthSprite;
     BufferedImage gameOverScreen;
     BufferedImage winCon;
+    BufferedImage flag;
+    BufferedImage floor;
+    BufferedImage wall;
     boolean isJumping = false;
     boolean gameOver = false;
     boolean dashed = false;
     boolean gameWon = false;
+    Clip runningSound;
+    Clip bgmSound;
+    Clip endSound;
     public mantisJump() {
         setPreferredSize(new Dimension(800, 450));//size of screen
         setBackground(new Color(135, 206, 235));//background color
@@ -72,9 +81,23 @@ public class mantisJump extends JPanel {
             enemySprite2 = ImageIO.read(new File("sprites/burt3.png"));
             healthSprite = ImageIO.read(new File("sprites/heart.png"));
             gameOverScreen = ImageIO.read(new File("sprites/gameOverImg.png"));
-            winCon = ImageIO.read(new File("sprites/ironmouse.png"));
+            floor = ImageIO.read(new File("sprites/floor.png"));
+            flag = ImageIO.read(new File("sprites/flag.png"));
+            wall = ImageIO.read(new File("sprites/wall.png"));
+            AudioInputStream audio = AudioSystem.getAudioInputStream(
+            new File("sounds/Mutant.wav"));
+            runningSound = AudioSystem.getClip();
+            runningSound.open(audio);
             }
-        } catch (IOException e) {
+            AudioInputStream bgmAudio =
+            AudioSystem.getAudioInputStream(new File("sounds/BGM1.wav"));
+            bgmSound = AudioSystem.getClip();
+            bgmSound.open(bgmAudio);
+            AudioInputStream gameOverAudio =
+            AudioSystem.getAudioInputStream(new File("sounds/gameOver.wav"));
+            endSound = AudioSystem.getClip();
+            endSound.open(gameOverAudio);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -84,12 +107,12 @@ public class mantisJump extends JPanel {
         super.paintComponent(g);
 
         // Draw the ground
-        g.setColor(new Color(80, 170, 80));//ground color
-        g.fillRect(0, 350, 800, 100);
-        g.drawImage(winCon, 700, 270, 128,128,this);
+        g.drawImage(floor, 0, 350,800,100, this);
+        g.drawImage(wall,0, 0, 800, 350,this);
+        g.drawImage(flag, 700, 230, 128,128,this);
         g.drawImage(enemySprite, enemyXpos, enemyYpos, 128, 128, this);
         g.drawImage(enemySprite2, enemyXpos2, enemyYpos2,128, 128, this);
-
+        
         if(health == 3){
         g.drawImage(healthSprite,0,0,96,96, this);
         g.drawImage(healthSprite,60,0,96,96,this);
@@ -115,9 +138,15 @@ public class mantisJump extends JPanel {
             g.drawImage(playerSprite3, mannyXpos, mannyYpos, 128, 128, this);
             spriteNum = 0;
         }
-
+        
         if(gameOver){
-
+            stopRunningSound();
+            stopBGM();
+            if(!gameOverSoundPlayed){
+            playGameOverSound();
+            gameOverSoundPlayed = true;
+            }
+            ongoing = false;
             g.setColor(Color.BLACK);
             g.fillRect(0,0,800,450);
 
@@ -130,17 +159,15 @@ public class mantisJump extends JPanel {
             return;
         }
         if(gameWon){
+            stopRunningSound();
             damageable = false;
+            ongoing = false;
             g.setColor(Color.WHITE);
             g.fillRect(0,0,800,450);
             g.setColor(Color.BLACK);
             g.setFont(new Font("Comic Sans MS", Font.BOLD, 40));
             g.drawString("You Win!", 250, 350);
         }
-    }
-
-    public void drawImage(){
-
     }
 
     public static void main(String[] args) {
@@ -154,36 +181,45 @@ public class mantisJump extends JPanel {
         window.setLocationRelativeTo(null);
         window.setResizable(false);
         window.setVisible(true);
+        game.startRunningSound();
+        game.startBGM();
     }
 
     public void Jump(){//smaller jump
-        if(isJumping == false){//checks if jumping
+        if(isJumping == false && ongoing == true){//checks if jumping
             isJumping = true;//sets isJumping to true
             velocityY = -15;//sets velocity
+            stopRunningSound();
+            playSound("sounds/Jump11.wav");
         }
     }
     public void Jump2(){//bigger jump
-        if(isJumping == false){//checks if jumping
+        if(isJumping == false && ongoing == true){//checks if jumping
             isJumping = true;//sets isJumping to true
             velocityY = -19;//sets velocity
+            stopRunningSound();
+            playSound("sounds/Jump30.wav");
         }
     }
     public void dash(){//dashs forward/teleport
-        if(mannyYpos < enemyYpos - 10){
+        playSound("sounds/airdash8.wav");
+        if(ongoing == true){
+        if(mannyYpos < enemyYpos - 30){
         damageable = false;
         }
-        mannyXpos = mannyXpos + 80;
+        mannyXpos = mannyXpos + 70;
         dashed = true;
         Timer dashTimer = new Timer(3000, e -> {
             dashed = false;
         });
-        Timer shieldTimer = new Timer(3000, e -> {
+        Timer shieldTimer = new Timer(1000, e -> {
             damageable = true;
         });
         dashTimer.start();
         dashTimer.setRepeats(false);
         shieldTimer.start();
         shieldTimer.setRepeats(false);
+    }
     }
     public void Collision(){
         //code for collision check, damages player if collision occurs
@@ -194,9 +230,10 @@ public class mantisJump extends JPanel {
         boolean intersect = manny.intersects(enemy);
         boolean intersect2 = manny.intersects(enemy2);
         boolean intersect3 = manny.intersects(goal);
-        if(intersect){//collision for enemy1
+        if(intersect && ongoing == true){//collision for enemy1
             if(damageable){
             health = health - 1;//health minus one
+            playSound("sounds/Hit3.wav");
             if(health <= 0){
                 gameOver = true;
             }
@@ -208,9 +245,10 @@ public class mantisJump extends JPanel {
             timer2.start();//starts timer
             }
         }
-        if(intersect2){//collision for enemy2
+        if(intersect2 && ongoing == true){//collision for enemy2
             if(damageable){
             health = health - 1;//health minus one
+            playSound("sounds/Hit3.wav");
             if(health <= 0){
                 gameOver = true;
             }
@@ -222,23 +260,84 @@ public class mantisJump extends JPanel {
             timer3.start();//starts timer
             }
         }
-        if(intersect3){
+        if(intersect3 && ongoing == true){
             gameWon = true;
-            damageable = false;
         }
     }
+    public void playSound(String filePath) {
+    try {
+        AudioInputStream audio = AudioSystem.getAudioInputStream(
+            new File(filePath)
+        );
+
+        Clip clip = AudioSystem.getClip();
+        clip.open(audio);
+        clip.start();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    
+}
+    public void playGameOverSound() {
+        if (endSound != null) {
+            endSound.setFramePosition(0);
+            endSound.start();
+        }
+    }
+    public void startRunningSound() {
+    if (runningSound != null && !runningSound.isRunning()) {
+        runningSound.setFramePosition(0);
+        runningSound.loop(Clip.LOOP_CONTINUOUSLY);
+    }
+}
+
+    public void stopRunningSound() {
+        if (runningSound != null && runningSound.isRunning()) {
+            runningSound.stop();
+        }
+    }
+    public void startBGM() {
+    if (bgmSound != null && !bgmSound.isRunning()) {
+        bgmSound.setFramePosition(0);
+        bgmSound.loop(Clip.LOOP_CONTINUOUSLY);
+    }
+}
+
+public void stopBGM() {
+    if (bgmSound != null && bgmSound.isRunning()) {
+        bgmSound.stop();
+    }
+}
     public void updateGame(){
         Collision();
         if(isJumping){
+            if(enemySpeed == 1){
+        enemyXpos = enemyXpos - 8;
+        }
+        else if(enemySpeed ==2){
+        enemyXpos = enemyXpos - 9;
+        }
+        else{
+        enemyXpos = enemyXpos - 13;
+        }
+        if(enemySpeed2 == 1){
+        enemyXpos2 = enemyXpos2 - 11;
+        }
+        else if(enemySpeed2 == 2){
+        enemyXpos2 = enemyXpos2 - 7;
+        }
+        else{
+        enemyXpos2 = enemyXpos2 - 15;
+        }
             spriteNum = 3;
-            enemyXpos = enemyXpos - 8;
-            enemyXpos2 = enemyXpos2 - 10;
             velocityY = velocityY + gravity;//increases velocity for next
             mannyYpos = mannyYpos + velocityY;//changes position
             if(mannyYpos >= 230){
                 mannyYpos = 230;
                 velocityY = 0;
                 isJumping = false;
+                startRunningSound();
             }
             if(mannyXpos >= enemyXpos){
                 if(mannyYpos > enemyYpos){
