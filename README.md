@@ -4,3 +4,5 @@ Controls:
 Z: Jump
 X: Big Jump
 C: Dash
+
+Avoid enemies and make it to the flag!
