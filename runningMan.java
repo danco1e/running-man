@@ -32,6 +32,7 @@ public class runningMan extends JPanel {
     BufferedImage flag;
     BufferedImage floor;
     BufferedImage wall;
+    BufferedImage gameWonScreen;
     boolean isJumping = false;
     boolean gameOver = false;
     boolean dashed = false;
@@ -80,6 +81,7 @@ public class runningMan extends JPanel {
             enemySprite2 = ImageIO.read(new File("sprites/burt3.png"));
             healthSprite = ImageIO.read(new File("sprites/heart.png"));
             gameOverScreen = ImageIO.read(new File("sprites/gameOverImg.png"));
+            gameWonScreen = ImageIO.read(new File("sprites/gameWon.png"));
             floor = ImageIO.read(new File("sprites/floor.png"));
             flag = ImageIO.read(new File("sprites/flag.png"));
             wall = ImageIO.read(new File("sprites/wall.png"));
@@ -89,7 +91,7 @@ public class runningMan extends JPanel {
             runningSound.open(audio);
             }
             AudioInputStream bgmAudio =
-            AudioSystem.getAudioInputStream(new File("sounds/BGM1.wav"));
+            AudioSystem.getAudioInputStream(new File("sounds/BGMFinal.wav"));
             bgmSound = AudioSystem.getClip();
             bgmSound.open(bgmAudio);
             AudioInputStream gameOverAudio =
@@ -159,13 +161,10 @@ public class runningMan extends JPanel {
         }
         if(gameWon){
             stopRunningSound();
+            stopBGM();
             damageable = false;
             ongoing = false;
-            g.setColor(Color.WHITE);
-            g.fillRect(0,0,800,450);
-            g.setColor(Color.BLACK);
-            g.setFont(new Font("Comic Sans MS", Font.BOLD, 40));
-            g.drawString("You Win!", 250, 350);
+            g.drawImage(gameWonScreen, 0, 0, 800, 450, this);
         }
     }
 
@@ -278,32 +277,33 @@ public class runningMan extends JPanel {
     }
     
 }
-    public void playGameOverSound() {
+    public void playGameOverSound() {//plays game over sound when game over
         if (endSound != null) {
             endSound.setFramePosition(0);
             endSound.start();
         }
     }
-    public void startRunningSound() {
+    public void startRunningSound() {//starts player running sound
     if (runningSound != null && !runningSound.isRunning()) {
         runningSound.setFramePosition(0);
         runningSound.loop(Clip.LOOP_CONTINUOUSLY);
     }
 }
 
-    public void stopRunningSound() {
+    public void stopRunningSound() {//stops player running sound
         if (runningSound != null && runningSound.isRunning()) {
             runningSound.stop();
         }
     }
-    public void startBGM() {
-    if (bgmSound != null && !bgmSound.isRunning()) {
+    public void startBGM() {//starts background music on loop
+    if (bgmSound != null) {
+        bgmSound.stop();
         bgmSound.setFramePosition(0);
         bgmSound.loop(Clip.LOOP_CONTINUOUSLY);
     }
 }
 
-public void stopBGM() {
+public void stopBGM() {//stops background music
     if (bgmSound != null && bgmSound.isRunning()) {
         bgmSound.stop();
     }
